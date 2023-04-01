@@ -1,6 +1,8 @@
 require 'csv'
 require 'google/apis/civicinfo_v2'
 require 'erb'
+require 'date'
+require 'time'
 
 puts 'Event Manager Initialized!'
 
@@ -62,6 +64,12 @@ def save_thank_you_letter(id, form_letter)
 
 end
 
+# compare hour and time
+
+hour_of_the_day = []
+day_of_the_week = []
+
+
 template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
 
@@ -70,14 +78,22 @@ contents.each do |row|
   name = row[:first_name]
   id = row[0]
   zipcode = clean_zipcode(row[:zipcode])
+  date_time = row[:regdate]
+  parsed_date = Time.strptime(date_time, '%m/%d/%y %H:%M')
+  hour_of_the_day.push(parsed_date.hour)
+  day_of_the_week.push(parsed_date.wday)
 
   phone = clean_homephone(row[:homephone], name)
-  puts phone
+
   legislators = legislators_by_zipcode(zipcode)
-  
+   
   personal_letter = erb_template.result(binding)
   save_thank_you_letter(id, personal_letter)
 end 
 
 
+calendar = ['Sunday', 'Monday', 'Tuesday','Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+puts "The most common hours were #{hour_of_the_day.max_by{ |x| hour_of_the_day.count(x)}}"
+puts "The most common day was #{calendar[day_of_the_week.max_by{ |x| day_of_the_week.count(x)}]}"
 
